@@ -1,0 +1,10 @@
+version: "3.7"
+
+services:
+  hpp:
+    container_name: hpp
+    restart: always
+    build: .
+    env_file: .env
+    ports:
+      - 8082:8082

@@ -1,0 +1,92 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Sequencer {
+  id         Int      @id @default(autoincrement())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  name       String   @unique @db.VarChar(50)
+  data       Int      @default(0)
+
+  @@map("sequencers")
+}
+
+model FacebookPage {
+  id           Int      @id @default(autoincrement())
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+  page_id      String   @unique @db.VarChar(50)
+  name         String   @db.VarChar(100)
+  access_token String   @db.VarChar(500)
+  p2m_ph       Boolean  @default(false)
+  bankslip_api Boolean  @default(false)
+  p2m_th       Boolean  @default(false)
+  pipeline     Boolean  @default(false)
+
+  @@map("facebook_pages")
+}
+
+// ref_type: 1: FACEBOOK_PAGE, 2: LINE, 3: DISCORD, 4: TELEGRAM
+model MerchantChannel {
+  id         Int                   @id @default(autoincrement())
+  created_at DateTime              @default(now())
+  updated_at DateTime              @updatedAt
+  ref_id     String                @db.VarChar(50)
+  name       String                @db.VarChar(100)
+  ref_type   String                @db.VarChar(100)
+  token      String                @db.VarChar(500)
+  registries ApplicationRegistry[]
+
+  @@unique([ref_id, ref_type], name: "uniqueMerchantChannel")
+  @@map("merchant_channel")
+}
+
+// ref_id: reference object id, page id for facebook page, line id for LINE, channel id for discord, bot id for telegram
+// app_id: 1: MessengerP2MPro,  2: MessengerP2MLite, 3: MessengerBankSlip
+model ApplicationRegistry {
+  id          Int              @id @default(autoincrement())
+  created_at  DateTime         @default(now())
+  updated_at  DateTime         @updatedAt
+  channel     MerchantChannel? @relation(fields: [channel_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  application Application?     @relation(fields: [app_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  app_id      Int?
+  channel_id  Int?
+  enabled     Boolean          @default(true)
+
+  @@unique([channel_id, app_id], name: "uniqueApplicationRegistry")
+  @@map("application_registry")
+}
+
+model Application {
+  id         Int                   @id @default(autoincrement())
+  created_at DateTime              @default(now())
+  updated_at DateTime              @updatedAt
+  app_id     String                @db.VarChar(50)
+  app_name   String                @db.VarChar(50)
+  topic      String                @db.VarChar(100)
+  enabled    Boolean               @default(true)
+  registries ApplicationRegistry[]
+
+  @@unique([app_id], name: "uniqueApplicationId")
+  @@map("application")
+}
+
+model ApiKey {
+  id Int @id @default(autoincrement())
+  created_at DateTime              @default(now())
+  updated_at DateTime              @updatedAt
+  key_name     String              @db.VarChar(100)
+  key_content   String             @db.VarChar(500)
+  enabled    Boolean               @default(true)
+
+  @@map("api_key")
+}
